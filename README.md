@@ -11,8 +11,9 @@ So if any credits, it should go to 0xSina, I just modified the code to prevent d
 How to use:
 --------------
 Note: It's straight forward enough to use pretty much the same way as NSURLConnection
-1. Read TASViewController.m - under - viewDidLoad.
-2. Read iOS Documentation (iOS 5+) and learn how NSURLConnection works, then read 1.
+
+1.  Read TASViewController.m - under - viewDidLoad.
+2.  Read iOS Documentation (iOS 5+) and learn how NSURLConnection works, then read 1.
 
 Final words:
 --------------
