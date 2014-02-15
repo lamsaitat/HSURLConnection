@@ -1,6 +1,5 @@
 //
 //  HSURLConnection.m
-//  Loverly
 //
 //  Created by Sai Tat Lam on 15/02/13.
 //  Copyright (c) 2013 Henshin Soft. All rights reserved.
@@ -29,30 +28,30 @@ static HSURLConnection *sharedInstance__;
 @implementation HSURLConnection
 
 + (id)sharedInstance {
-  if (sharedInstance__ == nil) {
-    sharedInstance__ = [[HSURLConnection alloc] init];
-  }
-  
-  return sharedInstance__;
+    if (sharedInstance__ == nil) {
+        sharedInstance__ = [[HSURLConnection alloc] init];
+    }
+    
+    return sharedInstance__;
 }
 
 - (id)init
 {
-  self = [super init];
-  
-  if (self) {
-    self.connections = [NSMutableDictionary dictionary];
-    self.downloadBlocks = [NSMutableDictionary dictionary];
-    self.uploadBlocks = [NSMutableDictionary dictionary];
-    self.completionBlocks = [NSMutableDictionary dictionary];
-    self.errorBlocks = [NSMutableDictionary dictionary];
-    self.datas = [NSMutableDictionary dictionary];
-    self.requests = [NSMutableDictionary dictionary];
-    self.responses = [NSMutableDictionary dictionary];
-    self.downloadSizes = [NSMutableDictionary dictionary];
-  }
-  
-  return self;
+    self = [super init];
+    
+    if (self) {
+        self.connections = [NSMutableDictionary dictionary];
+        self.downloadBlocks = [NSMutableDictionary dictionary];
+        self.uploadBlocks = [NSMutableDictionary dictionary];
+        self.completionBlocks = [NSMutableDictionary dictionary];
+        self.errorBlocks = [NSMutableDictionary dictionary];
+        self.datas = [NSMutableDictionary dictionary];
+        self.requests = [NSMutableDictionary dictionary];
+        self.responses = [NSMutableDictionary dictionary];
+        self.downloadSizes = [NSMutableDictionary dictionary];
+    }
+    
+    return self;
 }
 
 + (void)asyncConnectionWithRequest:(NSURLRequest *)request
@@ -61,175 +60,184 @@ static HSURLConnection *sharedInstance__;
                uploadPorgressBlock:(HSURLConnectionUploadProgressBlock)uploadBlock
              downloadProgressBlock:(HSURLConnectionDownloadProgressBlock)downloadBlock
 {
-  NSString *key = [request.URL.absoluteString copy];
-  
-  // If a connection is already happening, we just overwrite the blocks.
-  if ([SHARED_INSTANCE.connections objectForKey:key]) {
+    NSString *key = [request.URL.absoluteString copy];
+    
+    // If a connection is already happening, we just overwrite the blocks.
+    if ([SHARED_INSTANCE.connections objectForKey:key]) {
+        if (completionBlock) {
+            [SHARED_INSTANCE.completionBlocks setObject:[completionBlock copy] forKey:key];
+        } else {
+            [SHARED_INSTANCE.completionBlocks removeObjectForKey:key];
+        }
+        if (errorBlock) {
+            [SHARED_INSTANCE.errorBlocks setObject:[errorBlock copy] forKey:key];
+        } else {
+            [SHARED_INSTANCE.errorBlocks removeObjectForKey:key];
+        }
+        if (downloadBlock) {
+            [SHARED_INSTANCE.downloadBlocks setObject:[downloadBlock copy] forKey:key];
+        } else {
+            [SHARED_INSTANCE.downloadBlocks removeObjectForKey:key];
+        }
+        if (uploadBlock) {
+            [SHARED_INSTANCE.uploadBlocks setObject:[uploadBlock copy] forKey:key];
+        } else {
+            [SHARED_INSTANCE.uploadBlocks removeObjectForKey:key];
+        }
+        return;
+    }
+    
+    NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request delegate:SHARED_INSTANCE startImmediately:NO];
+    [connection scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    
+    
+    // Setup connection prerequisites.
+    [SHARED_INSTANCE.connections setObject:connection  forKey:key];
+    [SHARED_INSTANCE.requests setObject:request forKey:key];
     if (completionBlock) {
-      [SHARED_INSTANCE.completionBlocks setObject:[completionBlock copy] forKey:key];
-    } else {
-      [SHARED_INSTANCE.completionBlocks removeObjectForKey:key];
+        [SHARED_INSTANCE.completionBlocks setObject:[completionBlock copy] forKey:key];
     }
     if (errorBlock) {
-      [SHARED_INSTANCE.errorBlocks setObject:[errorBlock copy] forKey:key];
-    } else {
-      [SHARED_INSTANCE.errorBlocks removeObjectForKey:key];
+        [SHARED_INSTANCE.errorBlocks setObject:[errorBlock copy] forKey:key];
     }
     if (downloadBlock) {
-      [SHARED_INSTANCE.downloadBlocks setObject:[downloadBlock copy] forKey:key];
-    } else {
-      [SHARED_INSTANCE.downloadBlocks removeObjectForKey:key];
+        [SHARED_INSTANCE.downloadBlocks setObject:[downloadBlock copy] forKey:key];
     }
     if (uploadBlock) {
-      [SHARED_INSTANCE.uploadBlocks setObject:[uploadBlock copy] forKey:key];
-    } else {
-      [SHARED_INSTANCE.uploadBlocks removeObjectForKey:key];
+        [SHARED_INSTANCE.uploadBlocks setObject:[uploadBlock copy] forKey:key];
     }
-    return;
-  }
-  
-  NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request delegate:SHARED_INSTANCE startImmediately:NO];
-  [connection scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-  
-  
-  // Setup connection prerequisites.
-  [SHARED_INSTANCE.connections setObject:connection  forKey:key];
-  [SHARED_INSTANCE.requests setObject:request forKey:key];
-  if (completionBlock) {
-    [SHARED_INSTANCE.completionBlocks setObject:[completionBlock copy] forKey:key];
-  }
-  if (errorBlock) {
-    [SHARED_INSTANCE.errorBlocks setObject:[errorBlock copy] forKey:key];
-  }
-  if (downloadBlock) {
-    [SHARED_INSTANCE.downloadBlocks setObject:[downloadBlock copy] forKey:key];
-  }
-  if (uploadBlock) {
-    [SHARED_INSTANCE.uploadBlocks setObject:[uploadBlock copy] forKey:key];
-  }
-  [connection start];
+    [connection start];
 }
 
 + (void)asyncConnectionWithRequest:(NSURLRequest *)request
                    completionBlock:(HSURLConnectionCompletionBlock)completionBlock
                         errorBlock:(HSURLConnectionErrorBlock)errorBlock
 {
-  [HSURLConnection asyncConnectionWithRequest:request
-                              completionBlock:completionBlock
-                                   errorBlock:errorBlock
-                          uploadPorgressBlock:nil
-                        downloadProgressBlock:nil];
+    [HSURLConnection asyncConnectionWithRequest:request
+                                completionBlock:completionBlock
+                                     errorBlock:errorBlock
+                            uploadPorgressBlock:nil
+                          downloadProgressBlock:nil];
 }
 
 + (void)asyncConnectionWithURLString:(NSString *)urlString
                      completionBlock:(HSURLConnectionCompletionBlock)completionBlock
                           errorBlock:(HSURLConnectionErrorBlock)errorBlock
 {
-  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlString]];
-  
-  [HSURLConnection asyncConnectionWithRequest:request
-                              completionBlock:completionBlock
-                                   errorBlock:errorBlock];
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:urlString]];
+    
+    [HSURLConnection asyncConnectionWithRequest:request
+                                completionBlock:completionBlock
+                                     errorBlock:errorBlock];
 }
 
 - (void)cleanUpForConnection:(NSURLConnection *)connection
 {
-  NSArray *keys = [self.connections allKeysForObject:connection];
-  
-  for (NSString *key in keys) {
+    NSArray *keys = [self.connections allKeysForObject:connection];
     
-    [self.connections removeObjectForKey:key];
-    [self.requests removeObjectForKey:key];
-    [self.responses removeObjectForKey:key];
-    [self.datas removeObjectForKey:key];
-    [self.completionBlocks removeObjectForKey:key];
-    [self.errorBlocks removeObjectForKey:key];
-    [self.downloadBlocks removeObjectForKey:key];
-    [self.uploadBlocks removeObjectForKey:key];
-    [self.downloadSizes removeObjectForKey:key];
-  }
+    for (NSString *key in keys) {
+        
+        [self.connections removeObjectForKey:key];
+        [self.requests removeObjectForKey:key];
+        [self.responses removeObjectForKey:key];
+        [self.datas removeObjectForKey:key];
+        [self.completionBlocks removeObjectForKey:key];
+        [self.errorBlocks removeObjectForKey:key];
+        [self.downloadBlocks removeObjectForKey:key];
+        [self.uploadBlocks removeObjectForKey:key];
+        [self.downloadSizes removeObjectForKey:key];
+    }
 }
 
 #pragma mark - NSURLConnectionDelegate
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
 {
-  
-  NSArray *keys = [self.connections allKeysForObject:connection];
-  
-  for (NSString *key in keys) {
-    HSURLConnectionErrorBlock errorBlock = self.errorBlocks[key];
-    if (errorBlock) errorBlock(error);
-  }
-  
-  [SHARED_INSTANCE cleanUpForConnection:connection];
+    
+    NSArray *keys = [self.connections allKeysForObject:connection];
+    
+    for (NSString *key in keys) {
+        HSURLConnectionErrorBlock errorBlock = self.errorBlocks[key];
+        if (errorBlock) errorBlock(error);
+    }
+    
+    [SHARED_INSTANCE cleanUpForConnection:connection];
 }
 
 #pragma mark - NSURLConnectionDataDelegate
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
-  NSArray *keys = [self.connections allKeysForObject:connection];
-  
-  for (NSString *key in keys) {
-    HSURLConnectionCompletionBlock completionBlock = self.completionBlocks[key];
-    NSData *data = self.datas[key];
-    id response = self.responses[key];
-    if (completionBlock) completionBlock(data, response);
-  }
-  
-  [SHARED_INSTANCE cleanUpForConnection:connection];
+    NSArray *keys = [self.connections allKeysForObject:connection];
+    
+    for (NSString *key in keys) {
+        NSHTTPURLResponse *response = self.responses[key];
+        
+        if (response.statusCode == 200) {
+            HSURLConnectionCompletionBlock completionBlock = self.completionBlocks[key];
+            NSData *data = self.datas[key];
+            
+            if (completionBlock) completionBlock(data, response);
+        } else {
+            HSURLConnectionErrorBlock errorBlock = self.errorBlocks[key];
+            NSData *data = self.datas[key];
+            NSError *error = [NSError errorWithDomain:@"com" code:response.statusCode userInfo:@{NSLocalizedDescriptionKey:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]}];
+            if (errorBlock) errorBlock(error);
+        }
+    }
+    
+    [SHARED_INSTANCE cleanUpForConnection:connection];
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
 {
-  NSArray *keys = [self.connections allKeysForObject:connection];
-  
-  for (NSString *key in keys) {
-    [self.responses setObject:response forKey:key];
-    [self.downloadSizes setObject:[NSNumber numberWithLongLong:response.expectedContentLength] forKey:key];
-  }
+    NSArray *keys = [self.connections allKeysForObject:connection];
+    
+    for (NSString *key in keys) {
+        [self.responses setObject:response forKey:key];
+        [self.downloadSizes setObject:[NSNumber numberWithLongLong:response.expectedContentLength] forKey:key];
+    }
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)theData
 {
-  NSArray *keys = [self.connections allKeysForObject:connection];
-  
-  for (NSString *key in keys) {
-    NSMutableData *data = (id)self.datas[key];
+    NSArray *keys = [self.connections allKeysForObject:connection];
     
-    if (data == nil) {
-      data = [[NSMutableData alloc] init];
+    for (NSString *key in keys) {
+        NSMutableData *data = (id)self.datas[key];
+        
+        if (data == nil) {
+            data = [[NSMutableData alloc] init];
+        }
+        
+        [data appendData:theData];
+        
+        [self.datas setObject:data forKey:key];
+        
+        NSNumber *downloadSize = (NSNumber *)self.downloadSizes[key];
+        HSURLConnectionDownloadProgressBlock downloadBlock = self.downloadBlocks[key];
+        if (downloadSize.longLongValue != -1) {
+            float progress = (float)data.length / (float)(downloadSize.longLongValue);
+            
+            if(downloadBlock) downloadBlock(progress);
+        }
     }
-    
-    [data appendData:theData];
-    
-    [self.datas setObject:data forKey:key];
-    
-    NSNumber *downloadSize = (NSNumber *)self.downloadSizes[key];
-    HSURLConnectionDownloadProgressBlock downloadBlock = self.downloadBlocks[key];
-    if (downloadSize.longLongValue != -1) {
-      float progress = (float)data.length / (float)(downloadSize.longLongValue);
-      
-      if(downloadBlock) downloadBlock(progress);
-    }
-  }
 }
 
 - (void)connection:(NSURLConnection *)connection didSendBodyData:(NSInteger)bytesWritten totalBytesWritten:(NSInteger)totalBytesWritten totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite
 {
-  float progress = (float)totalBytesWritten/(float)totalBytesExpectedToWrite;
-  NSArray *keys = [self.connections allKeysForObject:connection];
-  
-  for (NSString *key in keys) {
-    HSURLConnectionUploadProgressBlock uploadBlock = self.uploadBlocks[key];
-    if (uploadBlock) uploadBlock(progress);
-  }
+    float progress = (float)totalBytesWritten/(float)totalBytesExpectedToWrite;
+    NSArray *keys = [self.connections allKeysForObject:connection];
+    
+    for (NSString *key in keys) {
+        HSURLConnectionUploadProgressBlock uploadBlock = self.uploadBlocks[key];
+        if (uploadBlock) uploadBlock(progress);
+    }
 }
 
 - (NSCachedURLResponse *)connection:(NSURLConnection *)connection willCacheResponse:(NSCachedURLResponse *)cachedResponse
 {
-  return nil;
+    return nil;
 }
 
 @end
